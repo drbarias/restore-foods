@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="RESTORE Foods">
+<meta name="theme-color" content="#0a0a0f">
+<title>RESTORE Food Catalog</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  :root {
+    --bg: #0a0a0f;
+    --surface: #0f1724;
+    --surface2: #111827;
+    --border: #1e2a3a;
+    --text: #e8e6e0;
+    --muted: #7a8a9a;
+    --dim: #4a5568;
+    --accent: #4a9eff;
+    --g: #22c55e; --g-bg: #052e16; --g-mid: #16a34a22;
+    --y: #f59e0b; --y-bg: #1c1408; --y-mid: #d9770622;
+    --r: #ef4444; --r-bg: #1f0a0a; --r-mid: #dc262622;
+    --nj: #f59e0b;
+    --radius: 12px;
+    --font-mono: 'Courier New', Courier, monospace;
+    --font-serif: Georgia, 'Times New Roman', serif;
+  }
+  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--font-serif); overflow-x: hidden; }
+
+  /* ── HEADER ── */
+  #header {
+    position: sticky; top: 0; z-index: 50;
+    background: linear-gradient(135deg, #0f1724 0%, #0a0a0f 80%);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 16px 12px;
+  }
+  .header-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+  .header-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: 3px; color: var(--accent); text-transform: uppercase; margin-bottom: 4px; }
+  .header-title { font-size: 20px; font-weight: 700; color: #f0ece4; line-height: 1.2; }
+  .header-sub { font-size: 11px; color: var(--muted); margin-top: 4px; max-width: 340px; line-height: 1.5; }
+  .stat-row { display: flex; gap: 8px; }
+  .stat-box { background: var(--surface2); border-radius: 8px; padding: 8px 12px; text-align: center; min-width: 64px; }
+  .stat-num { font-size: 20px; font-weight: 800; line-height: 1; }
+  .stat-label { font-size: 9px; color: var(--muted); line-height: 1.3; margin-top: 2px; font-family: var(--font-mono); }
+
+  /* ── TIER TABS ── */
+  .tier-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+  .tier-tab { padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; font-size: 11px; font-family: var(--font-mono); transition: all 0.15s; white-space: nowrap; }
+  .tier-tab.active-all { border-color: var(--accent); background: #1a2a3a; color: var(--accent); }
+  .tier-tab.active-1 { border-color: var(--g); background: var(--g-mid); color: var(--g); }
+  .tier-tab.active-2 { border-color: var(--y); background: var(--y-mid); color: var(--y); }
+  .tier-tab.active-3 { border-color: var(--r); background: var(--r-mid); color: var(--r); }
+
+  /* ── FILTERS ── */
+  .filter-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .search-box { flex: 1; min-width: 140px; padding: 8px 12px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 13px; font-family: var(--font-mono); outline: none; }
+  .search-box:focus { border-color: var(--accent); }
+  .select-box { padding: 8px 10px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--muted); font-size: 11px; cursor: pointer; font-family: var(--font-mono); outline: none; max-width: 140px; }
+  .nj-btn { padding: 7px 12px; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; font-size: 11px; font-family: var(--font-mono); white-space: nowrap; transition: all 0.15s; }
+  .nj-btn.active { border-color: var(--nj); background: #1c140888; color: var(--nj); }
+  .result-count { font-size: 10px; color: var(--dim); font-family: var(--font-mono); margin-top: 6px; }
+
+  /* ── MAIN ── */
+  #main { padding: 16px; max-width: 960px; margin: 0 auto; }
+
+  /* ── SECTION HEADER ── */
+  .section-head { display: flex; align-items: center; gap: 10px; padding-bottom: 10px; border-bottom: 1px solid; margin-bottom: 12px; margin-top: 8px; }
+  .section-head-title { font-size: 13px; font-weight: 700; }
+  .section-head-count { font-size: 10px; color: var(--dim); font-family: var(--font-mono); }
+
+  /* ── GRID ── */
+  .food-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; margin-bottom: 28px; }
+
+  /* ── CARD ── */
+  .card { background: var(--surface); border-radius: var(--radius); padding: 14px; cursor: pointer; transition: all 0.15s; border: 1px solid transparent; position: relative; }
+  .card:active { transform: scale(0.98); }
+  .card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+  .tier-badge { font-size: 9px; font-family: var(--font-mono); padding: 2px 8px; border-radius: 4px; }
+  .nj-badge { font-size: 9px; color: var(--nj); font-family: var(--font-mono); }
+  .card-name { font-size: 13px; font-weight: 600; color: var(--text); line-height: 1.35; margin-bottom: 8px; }
+  .chip-row { display: flex; gap: 6px; flex-wrap: wrap; }
+  .chip { font-size: 9px; font-family: var(--font-mono); padding: 2px 7px; border-radius: 4px; }
+  .card-cat { font-size: 10px; color: var(--dim); margin-top: 8px; font-family: var(--font-mono); }
+
+  /* Tier-specific card borders on hover handled by JS */
+
+  /* ── MODAL ── */
+  #modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 200; align-items: flex-end; justify-content: center; padding: 0; }
+  #modal-overlay.open { display: flex; }
+  #modal { background: var(--surface2); border-radius: 20px 20px 0 0; padding: 24px 20px 40px; width: 100%; max-width: 520px; max-height: 85vh; overflow-y: auto; animation: slideUp 0.25s ease; }
+  @keyframes slideUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  .modal-handle { width: 36px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 18px; }
+  .modal-tier-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .modal-title { font-size: 18px; font-weight: 700; color: #f0ece4; line-height: 1.3; margin-bottom: 4px; }
+  .modal-nj { font-size: 11px; color: var(--nj); font-family: var(--font-mono); margin-bottom: 14px; }
+  .macro-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+  .macro-box { background: var(--surface); border-radius: 8px; padding: 10px 12px; }
+  .macro-label { font-size: 9px; color: var(--dim); font-family: var(--font-mono); margin-bottom: 3px; }
+  .macro-val { font-size: 20px; font-weight: 800; color: var(--text); }
+  .restore-note { font-size: 12px; color: #a0aec0; line-height: 1.7; padding: 14px; border-radius: 8px; border-left: 3px solid; background: var(--surface); }
+  .restore-note-label { font-family: var(--font-mono); font-weight: 700; font-size: 11px; display: block; margin-bottom: 4px; }
+  .modal-cat { font-size: 11px; color: var(--dim); font-family: var(--font-mono); margin-top: 10px; }
+  .modal-close { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--muted); padding: 8px 20px; cursor: pointer; font-size: 13px; margin-top: 16px; width: 100%; }
+
+  /* ── EMPTY ── */
+  .empty { text-align: center; color: var(--dim); padding: 60px 20px; font-family: var(--font-mono); font-size: 13px; }
+
+  /* ── FOOTER ── */
+  #footer { text-align: center; padding: 20px; font-size: 10px; color: var(--dim); font-family: var(--font-mono); border-top: 1px solid var(--border); margin-top: 20px; }
+
+  /* ── PHOTO SECTION ── */
+  .photo-section-head { border-color: var(--accent) !important; }
+  .photo-section-title { color: var(--accent) !important; }
+
+  @media (min-width: 600px) {
+    #header { padding: 24px 24px 16px; }
+    #main { padding: 20px 24px; }
+    #modal-overlay { align-items: center; padding: 20px; }
+    #modal { border-radius: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="header">
+  <div class="header-top">
+    <div>
+      <div class="header-label">PARW Study · RESTORE Protocol</div>
+      <div class="header-title">NJ Food Adiposity Catalog</div>
+      <div class="header-sub">101 foods classified by Reversibility Window. Tap any card for clinical detail.</div>
+    </div>
+    <div class="stat-row">
+      <div class="stat-box"><div class="stat-num" style="color:var(--g)" id="cnt1">30</div><div class="stat-label">Open<br>Window</div></div>
+      <div class="stat-box"><div class="stat-num" style="color:var(--y)" id="cnt2">35</div><div class="stat-label">Narrowing<br>Window</div></div>
+      <div class="stat-box"><div class="stat-num" style="color:var(--r)" id="cnt3">36</div><div class="stat-label">Closing<br>Window</div></div>
+    </div>
+  </div>
+
+  <div class="tier-tabs">
+    <button class="tier-tab active-all" onclick="setTier(0)">All (101)</button>
+    <button class="tier-tab" onclick="setTier(1)">🟢 Open Window</button>
+    <button class="tier-tab" onclick="setTier(2)">🟡 Narrowing Window</button>
+    <button class="tier-tab" onclick="setTier(3)">🔴 Closing Window</button>
+  </div>
+
+  <div class="filter-row">
+    <input class="search-box" type="search" placeholder="Search foods…" oninput="render()" id="searchInput">
+    <select class="select-box" onchange="render()" id="catSelect"></select>
+    <button class="nj-btn" onclick="toggleNJ()" id="njBtn">🌿 NJ Only</button>
+  </div>
+  <div class="result-count" id="resultCount"></div>
+</div>
+
+<div id="main"></div>
+
+<div id="modal-overlay" onclick="closeModal(event)">
+  <div id="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-tier-row">
+      <span id="m-tier-badge" class="tier-badge"></span>
+      <button onclick="closeModalDirect()" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;">✕</button>
+    </div>
+    <div class="modal-title" id="m-name"></div>
+    <div id="m-nj" class="modal-nj"></div>
+    <div class="macro-grid">
+      <div class="macro-box"><div class="macro-label">CALORIES</div><div class="macro-val" id="m-cal"></div></div>
+      <div class="macro-box"><div class="macro-label">PROTEIN</div><div class="macro-val" id="m-prot"></div></div>
+      <div class="macro-box"><div class="macro-label">TOTAL SUGAR</div><div class="macro-val" id="m-sug"></div></div>
+      <div class="macro-box"><div class="macro-label">ADDED SUGAR ✦</div><div class="macro-val" id="m-asug"></div></div>
+    </div>
+    <div class="restore-note" id="m-note-box">
+      <span class="restore-note-label" id="m-note-label">RESTORE NOTE:</span>
+      <span id="m-note"></span>
+    </div>
+    <div class="modal-cat" id="m-cat"></div>
+    <button class="modal-close" onclick="closeModalDirect()">Close</button>
+  </div>
+</div>
+
+<div id="footer">RESTORE Protocol · PARW Study · Family First Primary Physicians · Oakhurst & Brick, NJ<br>For clinical reference only. Not a patient-facing dietary prescription.</div>
+
+<script>
+const T = {
+  1: { label:"Open Window", color:"#22c55e", bg:"#16a34a22", badge:"#16a34a", emoji:"🟢", tabClass:"active-1" },
+  2: { label:"Narrowing Window", color:"#f59e0b", bg:"#d9770622", badge:"#d97706", emoji:"🟡", tabClass:"active-2" },
+  3: { label:"Closing Window", color:"#ef4444", bg:"#dc262622", badge:"#dc2626", emoji:"🔴", tabClass:"active-3" },
+};
+
+const FOODS = [
+  // ── TIER 1: OPEN WINDOW ──────────────────────────────────────────────────
+  {id:1,name:"Chobani Greek Yogurt (plain/low-sugar)",tier:1,cat:"Dairy & Protein",cal:140,protein:20,sugar:6,addedSugar:0,note:"Benchmark: high protein density, 0g added sugar, lactase-added. All windows safe.",nj:false},
+  {id:2,name:"Hard-Boiled Eggs",tier:1,cat:"Dairy & Protein",cal:78,protein:6,sugar:0,addedSugar:0,note:"Ideal satiety/calorie ratio. Choline supports hepatic fat metabolism.",nj:false},
+  {id:3,name:"Almonds (1 oz)",tier:1,cat:"Nuts & Seeds",cal:164,protein:6,sugar:1,addedSugar:0,note:"MUFAs + fiber blunt post-prandial insulin spike. Portion-critical.",nj:false},
+  {id:4,name:"Walnuts (1 oz)",tier:1,cat:"Nuts & Seeds",cal:185,protein:4,sugar:1,addedSugar:0,note:"ALA omega-3 content supports adiponectin. Anti-inflammatory profile.",nj:false},
+  {id:5,name:"Fresh Blueberries (NJ-grown)",tier:1,cat:"Fruit",cal:84,protein:1,sugar:15,addedSugar:0,note:"NJ is a top blueberry producer. Anthocyanins reduce visceral adiposity markers.",nj:true},
+  {id:6,name:"Strawberries (½ cup)",tier:1,cat:"Fruit",cal:27,protein:1,sugar:4,addedSugar:0,note:"Low glycemic load. Vitamin C supports insulin sensitivity.",nj:false},
+  {id:7,name:"Baby Carrots with Hummus",tier:1,cat:"Vegetables",cal:100,protein:4,sugar:6,addedSugar:0,note:"Fiber + resistant starch + plant protein. LAR-neutral.",nj:false},
+  {id:8,name:"Celery with Natural Peanut Butter",tier:1,cat:"Vegetables",cal:100,protein:4,sugar:2,addedSugar:0,note:"Negative-calorie vehicle + healthy fat. Check label: no added sugar PB only.",nj:false},
+  {id:9,name:"Cottage Cheese (low-fat)",tier:1,cat:"Dairy & Protein",cal:90,protein:12,sugar:4,addedSugar:0,note:"Casein protein = slow-digesting. Supports overnight satiety. HOMA-IR favorable.",nj:false},
+  {id:10,name:"Edamame (steamed, salted)",tier:1,cat:"Dairy & Protein",cal:120,protein:11,sugar:2,addedSugar:0,note:"Complete plant protein. Phytoestrogens may support adiponectin signaling.",nj:false},
+  {id:11,name:"Canned Tuna in Water",tier:1,cat:"Dairy & Protein",cal:100,protein:22,sugar:0,addedSugar:0,note:"Top protein-to-calorie ratio. Omega-3 EPA/DHA suppress adipogenesis.",nj:false},
+  {id:12,name:"Turkey Breast Slices (deli, low-sodium)",tier:1,cat:"Dairy & Protein",cal:60,protein:12,sugar:1,addedSugar:0,note:"Lean protein, low caloric density. Verify: no added sugar or nitrates.",nj:false},
+  {id:13,name:"String Cheese (part-skim)",tier:1,cat:"Dairy & Protein",cal:80,protein:7,sugar:0,addedSugar:0,note:"Portable protein. Calcium supports lipolysis. Portion-safe by design.",nj:false},
+  {id:14,name:"Pistachios (1 oz)",tier:1,cat:"Nuts & Seeds",cal:159,protein:6,sugar:2,addedSugar:0,note:"Shell-on pistachios slow intake rate. Arginine supports vascular function.",nj:false},
+  {id:15,name:"Avocado (½ fruit)",tier:1,cat:"Vegetables",cal:114,protein:1,sugar:0,addedSugar:0,note:"MUFAs + beta-sitosterol reduce visceral fat. Avoid added sugar toppings.",nj:false},
+  {id:16,name:"Smoked Salmon (2 oz)",tier:1,cat:"Dairy & Protein",cal:66,protein:11,sugar:0,addedSugar:0,note:"High EPA/DHA. Watch sodium. Strong anti-adipogenic biomarker profile.",nj:false},
+  {id:17,name:"Roasted Chickpeas (1 oz, unsweetened)",tier:1,cat:"Nuts & Seeds",cal:120,protein:6,sugar:2,addedSugar:0,note:"Resistant starch + fiber lowers postprandial glucose. Good closing-window snack.",nj:false},
+  {id:18,name:"Plain Kefir (low-fat)",tier:1,cat:"Dairy & Protein",cal:110,protein:10,sugar:12,addedSugar:0,note:"Probiotic microbiome effect on adiposity. Natural lactose only.",nj:false},
+  {id:19,name:"Dark Chocolate (70%+, 1 square)",tier:1,cat:"Snacks",cal:55,protein:1,sugar:3,addedSugar:2,note:"Flavonols improve insulin sensitivity. Single square acceptable across all windows.",nj:false},
+  {id:20,name:"Olives (10 count)",tier:1,cat:"Snacks",cal:50,protein:0,sugar:0,addedSugar:0,note:"Oleic acid is directly anti-inflammatory. Portion controlled by caloric ceiling.",nj:false},
+  {id:21,name:"Beef Jerky (no added sugar, low-sodium)",tier:1,cat:"Dairy & Protein",cal:80,protein:13,sugar:2,addedSugar:0,note:"Portable, high-satiety. Verify label: many brands add sugar. Wawa grab-and-go option.",nj:true},
+  {id:22,name:"Sunflower Seeds (shell-on, 1 oz)",tier:1,cat:"Nuts & Seeds",cal:165,protein:6,sugar:1,addedSugar:0,note:"Vitamin E + selenium. Shell slows intake. Stadiums, boardwalk staple.",nj:false},
+  {id:23,name:"Whey Protein Shake (no added sugar)",tier:1,cat:"Dairy & Protein",cal:120,protein:25,sugar:2,addedSugar:0,note:"Post-exercise or meal replacement. Best protein-to-calorie ratio in this catalog.",nj:false},
+  {id:24,name:"Seaweed Snacks (1 pack)",tier:1,cat:"Snacks",cal:25,protein:1,sugar:0,addedSugar:0,note:"Ultra-low calorie. Iodine supports thyroid-adiposity axis. LAR-friendly.",nj:false},
+  {id:25,name:"Plain Greek Yogurt + Berries (homemade)",tier:1,cat:"Dairy & Protein",cal:150,protein:15,sugar:12,addedSugar:0,note:"RESTORE model food: volume eating + protein density + antioxidants.",nj:false},
+  {id:26,name:"Boiled Shrimp (4 oz)",tier:1,cat:"Dairy & Protein",cal:90,protein:19,sugar:0,addedSugar:0,note:"Highest protein:calorie ratio of animal proteins. Shore staple in NJ.",nj:true},
+  {id:27,name:"Cucumber Slices with Tzatziki",tier:1,cat:"Vegetables",cal:80,protein:5,sugar:4,addedSugar:0,note:"Water-dense. Greek yogurt base = protein. LAR-neutral.",nj:false},
+  {id:28,name:"Apple Slices (medium, no dip)",tier:1,cat:"Fruit",cal:95,protein:0,sugar:19,addedSugar:0,note:"Pectin fiber slows gastric emptying. Low glycemic index if eaten whole.",nj:false},
+  {id:29,name:"Mixed Greens Salad (olive oil + lemon)",tier:1,cat:"Vegetables",cal:80,protein:2,sugar:2,addedSugar:0,note:"Volume eating cornerstone. Anti-inflammatory across all adiposity windows.",nj:false},
+  {id:30,name:"Unsweetened Iced Tea (home-brewed)",tier:1,cat:"Beverages",cal:0,protein:0,sugar:0,addedSugar:0,note:"Catechins support fat oxidation. Hydration alone improves adiposity biomarkers.",nj:false},
+  // ── TIER 2: NARROWING WINDOW ─────────────────────────────────────────────
+  {id:31,name:"NJ Bagel (plain, small)",tier:2,cat:"Bread & Grains",cal:245,protein:9,sugar:3,addedSugar:1,note:"NJ icon. Dense refined carb — portion matters. Open window: fine. Closing: limit.",nj:true},
+  {id:32,name:"Pork Roll (Taylor Ham, 2 slices)",tier:2,cat:"NJ Classics",cal:140,protein:8,sugar:1,addedSugar:0,note:"NJ staple. Processed meat + sodium. Moderate; avoid frying in butter.",nj:true},
+  {id:33,name:"Hoagie / Sub (6-inch turkey)",tier:2,cat:"NJ Classics",cal:450,protein:28,sugar:6,addedSugar:2,note:"Protein-dense but calorie-loaded bread. Open window acceptable. Narrowing: half portion.",nj:true},
+  {id:34,name:"Natural Peanut Butter (2 tbsp)",tier:2,cat:"Nuts & Seeds",cal:190,protein:7,sugar:3,addedSugar:0,note:"Healthy fat but caloric. Avoid commercial brands with added sugar.",nj:false},
+  {id:35,name:"Air-Popped Popcorn (2 cups)",tier:2,cat:"Snacks",cal:62,protein:2,sugar:0,addedSugar:0,note:"Whole grain, low-calorie volume food. Closing window: watch butter/caramel additions.",nj:false},
+  {id:36,name:"Pretzels (1 oz, hard, salted)",tier:2,cat:"Snacks",cal:108,protein:3,sugar:1,addedSugar:0,note:"Refined carb. Low fat but low satiety. Sports venue staple in NJ.",nj:false},
+  {id:37,name:"Trail Mix (nut-heavy, 1 oz)",tier:2,cat:"Nuts & Seeds",cal:130,protein:4,sugar:6,addedSugar:3,note:"Calorie-dense. Watch M&M/raisin-heavy mixes — sugar spikes negate nut benefit.",nj:false},
+  {id:38,name:"Whole Grain Crackers (5-6 count)",tier:2,cat:"Bread & Grains",cal:120,protein:3,sugar:2,addedSugar:0,note:"Fiber offsets glycemic load. Acceptable vehicle for protein toppings.",nj:false},
+  {id:39,name:"Banana (medium)",tier:2,cat:"Fruit",cal:105,protein:1,sugar:14,addedSugar:0,note:"Glycemic index 51. Unripe = more resistant starch. Closing window: limit portion.",nj:false},
+  {id:40,name:"Grapes (1 cup)",tier:2,cat:"Fruit",cal:104,protein:1,sugar:23,addedSugar:0,note:"High natural sugar. Resveratrol anti-adipogenic but dose requires >1 cup.",nj:false},
+  {id:41,name:"Orange Juice (fresh-squeezed, 8 oz)",tier:2,cat:"Beverages",cal:112,protein:2,sugar:21,addedSugar:0,note:"Fruit sugar without fiber. Liquid calories do not register satiety.",nj:false},
+  {id:42,name:"Whole Grain Bread (2 slices)",tier:2,cat:"Bread & Grains",cal:160,protein:8,sugar:4,addedSugar:2,note:"Better than white but still refined. Verify '100% whole grain' — not just 'wheat'.",nj:false},
+  {id:43,name:"Thin-Crust Pizza (1 slice)",tier:2,cat:"NJ Classics",cal:200,protein:9,sugar:3,addedSugar:1,note:"NJ pizza culture. Single thin slice: manageable. Multiple slices = Tier 3.",nj:true},
+  {id:44,name:"Empanadas (1, baked)",tier:2,cat:"NJ Classics",cal:250,protein:10,sugar:3,addedSugar:1,note:"NJ's #1 finger food. Baked version acceptable. Fried version = Tier 3.",nj:true},
+  {id:45,name:"Rice Cakes (plain, 2 count)",tier:2,cat:"Snacks",cal:70,protein:1,sugar:0,addedSugar:0,note:"High GI per gram but low calorie load. Add protein topping to blunt glycemic impact.",nj:false},
+  {id:46,name:"Kind Bar (original, 1 bar)",tier:2,cat:"Snacks",cal:200,protein:6,sugar:5,addedSugar:5,note:"Better than candy bars. Still contains added sugar. Closing window: avoid.",nj:false},
+  {id:47,name:"Smoothie (fruit + Greek yogurt, no syrup)",tier:2,cat:"Beverages",cal:200,protein:12,sugar:24,addedSugar:0,note:"Natural sugar concentrated. Protein offsets. Watch commercial versions — most add sugar.",nj:false},
+  {id:48,name:"Cheddar Cheese (1 oz)",tier:2,cat:"Dairy & Protein",cal:113,protein:7,sugar:0,addedSugar:0,note:"High saturated fat. CLA may have modest anti-adipogenic effect. Portion-critical.",nj:false},
+  {id:49,name:"Chicken Wings (baked, plain, 4 count)",tier:2,cat:"Diner & Takeout",cal:280,protein:28,sugar:0,addedSugar:0,note:"High protein but fat-dense. Plain/baked OK. Buffalo sauce adds sodium; BBQ adds sugar.",nj:false},
+  {id:50,name:"Whole Milk Latte (no syrup, 12 oz)",tier:2,cat:"Beverages",cal:150,protein:8,sugar:12,addedSugar:0,note:"Protein-containing beverage. Natural lactose only. Dunkin'/Starbucks lines in NJ daily.",nj:true},
+  {id:51,name:"Oatmeal (plain, with fruit, no sweetener)",tier:2,cat:"Bread & Grains",cal:150,protein:5,sugar:8,addedSugar:0,note:"Beta-glucan fiber reduces LDL and improves insulin sensitivity.",nj:false},
+  {id:52,name:"Corn Tortilla Chips (12 chips) + Salsa",tier:2,cat:"Snacks",cal:150,protein:2,sugar:2,addedSugar:1,note:"Restaurant staple. Portion key — basket refills quickly become Tier 3.",nj:false},
+  {id:53,name:"Guacamole (¼ cup)",tier:2,cat:"Vegetables",cal:90,protein:1,sugar:1,addedSugar:0,note:"Avocado base = MUFA. Pair with veggies not chips for Tier 1 upgrade.",nj:false},
+  {id:54,name:"Blueberry Muffin (small, bakery)",tier:2,cat:"NJ Classics",cal:280,protein:4,sugar:22,addedSugar:18,note:"NJ diner/bakery staple. Added sugar load is high. Closing window: avoid.",nj:true},
+  {id:55,name:"Sweet Potato Fries (baked, 1 cup)",tier:2,cat:"Diner & Takeout",cal:180,protein:3,sugar:8,addedSugar:0,note:"Lower GI than white potato. Vitamin A + fiber. Narrowing/closing: portion to ½ cup.",nj:false},
+  {id:56,name:"Coleslaw (vinegar-based, ½ cup)",tier:2,cat:"Diner & Takeout",cal:60,protein:1,sugar:5,addedSugar:3,note:"NJ diner side. Vinegar-based >> mayo-based. Sulforaphane in cabbage is anti-inflammatory.",nj:true},
+  {id:57,name:"Deli Wrap (turkey, lettuce, tomato)",tier:2,cat:"Diner & Takeout",cal:320,protein:22,sugar:4,addedSugar:2,note:"Whole grain wrap: Tier 2. White tortilla wrap: Tier 3. Protein density still favorable.",nj:false},
+  {id:58,name:"Pork Roll, Egg & Cheese (no bun)",tier:2,cat:"NJ Classics",cal:250,protein:18,sugar:1,addedSugar:0,note:"Without the bun: protein-adequate. With roll: Tier 3. Morning staple at Wawa/QuickChek.",nj:true},
+  {id:59,name:"Wawa Shorti (6-inch, grilled chicken)",tier:2,cat:"NJ Classics",cal:380,protein:30,sugar:5,addedSugar:2,note:"NJ grab-and-go icon. Grilled chicken choice is RESTORE-mindful.",nj:true},
+  {id:60,name:"Pickles (3 spears)",tier:2,cat:"Snacks",cal:12,protein:0,sugar:1,addedSugar:0,note:"Near-zero calorie. Vinegar/fermentation supports gut microbiome. Watch sodium.",nj:false},
+  {id:61,name:"Frozen Yogurt (small, plain, no toppings)",tier:2,cat:"Dairy & Protein",cal:150,protein:5,sugar:22,addedSugar:18,note:"Lower fat than ice cream. Added sugar still significant. Toppings can tip to Tier 3.",nj:false},
+  {id:62,name:"Skim Milk (8 oz)",tier:2,cat:"Beverages",cal:83,protein:8,sugar:12,addedSugar:0,note:"Protein + calcium. Natural lactose only. Insulin index slightly elevated but manageable.",nj:false},
+  {id:63,name:"Energy Bar (RxBar, 1 bar)",tier:2,cat:"Snacks",cal:210,protein:12,sugar:15,addedSugar:5,note:"Better than most bars. Dates = concentrated sugar. Closing window: caution.",nj:false},
+  {id:64,name:"Starbucks Iced Coffee (unsweetened, oat milk)",tier:2,cat:"Beverages",cal:110,protein:2,sugar:8,addedSugar:0,note:"Acceptable if no added syrups. Oat milk natural sugars. NJ commuter daily ritual.",nj:true},
+  {id:65,name:"Small Crumb Cake (1 slice, diner portion)",tier:2,cat:"NJ Classics",cal:300,protein:4,sugar:25,addedSugar:20,note:"NJ icon. Borderline Tier 3 — portion size determines tier.",nj:true},
+  // ── TIER 3: CLOSING WINDOW ───────────────────────────────────────────────
+  {id:66,name:"Disco Fries (NJ diner staple)",tier:3,cat:"NJ Classics",cal:700,protein:18,sugar:5,addedSugar:2,note:"NJ icon. Crinkle fries + mozzarella + gravy = triple adipogenic hit. All markers worsen.",nj:true},
+  {id:67,name:"Salt Water Taffy (6 pieces)",tier:3,cat:"NJ Classics",cal:150,protein:0,sugar:26,addedSugar:26,note:"Shore staple. Pure sugar + corn syrup + butter. HOMA-IR and LAR unfavorable.",nj:true},
+  {id:68,name:"Zeppoles (3 count)",tier:3,cat:"NJ Classics",cal:360,protein:4,sugar:20,addedSugar:18,note:"NJ Italian festival staple. Fried dough + powdered sugar. All adiposity markers spike.",nj:true},
+  {id:69,name:"Fat Sandwich (Rutgers-style)",tier:3,cat:"NJ Classics",cal:900,protein:30,sugar:8,addedSugar:4,note:"NJ college icon. High calorie + refined carb + fried components = maximum adipogenic load.",nj:true},
+  {id:70,name:"NJ Thick-Crust Pizza (2+ slices)",tier:3,cat:"NJ Classics",cal:600,protein:22,sugar:8,addedSugar:3,note:"Multiple slices = high refined carb + saturated fat. Visceral fat driver.",nj:true},
+  {id:71,name:"Bagel + Full Cream Cheese",tier:3,cat:"NJ Classics",cal:490,protein:13,sugar:6,addedSugar:2,note:"Dense carb + saturated fat. Swap: thin bagel + low-fat CC = Tier 2.",nj:true},
+  {id:72,name:"Glazed Donut (Dunkin')",tier:3,cat:"Fast Food & Chains",cal:260,protein:4,sugar:12,addedSugar:12,note:"Refined carb + added sugar. Dunkin' is ubiquitous in NJ. Insulin spike significant.",nj:true},
+  {id:73,name:"Doritos / Lay's Chips (1 oz bag)",tier:3,cat:"Snacks",cal:140,protein:2,sugar:2,addedSugar:1,note:"Ultra-processed. Hyper-palatable design overrides satiety.",nj:false},
+  {id:74,name:"Regular Soda (Coke/Pepsi, 12 oz can)",tier:3,cat:"Beverages",cal:140,protein:0,sugar:39,addedSugar:39,note:"HFCS + empty calories. Liquid sugar bypasses satiety entirely. LAR worst-class.",nj:false},
+  {id:75,name:"Diner Milkshake (16 oz)",tier:3,cat:"Diner & Takeout",cal:600,protein:10,sugar:80,addedSugar:65,note:"NJ diner culture. Ice cream + HFCS syrup. Single worst item for HOMA-IR.",nj:true},
+  {id:76,name:"Loaded Nachos (restaurant portion)",tier:3,cat:"Diner & Takeout",cal:800,protein:20,sugar:8,addedSugar:4,note:"Fried chips + cheese + sour cream. Caloric density + saturated fat.",nj:false},
+  {id:77,name:"Mozzarella Sticks (fried, 4 count)",tier:3,cat:"NJ Classics",cal:320,protein:14,sugar:3,addedSugar:1,note:"NJ bar/sports staple. Breading + deep fry + cheese = saturated fat + refined carb combo.",nj:true},
+  {id:78,name:"General Tso's Chicken (NJ takeout portion)",tier:3,cat:"Diner & Takeout",cal:650,protein:28,sugar:30,addedSugar:25,note:"NJ Chinese-American takeout staple. High sugar sauce + fried protein. LAR unfavorable.",nj:true},
+  {id:79,name:"Pork Roll, Egg & Cheese on Kaiser Roll",tier:3,cat:"NJ Classics",cal:520,protein:22,sugar:5,addedSugar:2,note:"Full NJ breakfast sandwich. The roll is the tipping point to Tier 3.",nj:true},
+  {id:80,name:"Cheesesteak (full, 10-inch)",tier:3,cat:"Diner & Takeout",cal:900,protein:45,sugar:8,addedSugar:2,note:"South NJ/Philly crossover. Protein-adequate but saturated fat + refined bread = Tier 3.",nj:true},
+  {id:81,name:"Diner Hot Dog with Bun + Condiments",tier:3,cat:"Fast Food & Chains",cal:350,protein:12,sugar:8,addedSugar:5,note:"Processed meat + refined bun + nitrate exposure.",nj:false},
+  {id:82,name:"Diner Cheeseburger (full, with fries)",tier:3,cat:"Diner & Takeout",cal:900,protein:40,sugar:10,addedSugar:5,note:"NJ diner culture. Protein offset by calorie density + saturated fat + refined bun.",nj:true},
+  {id:83,name:"French Fries (large, fast food)",tier:3,cat:"Fast Food & Chains",cal:490,protein:7,sugar:0,addedSugar:0,note:"Acrylamide + refined starch + saturated fat from frying oil. High visceral adiposity risk.",nj:false},
+  {id:84,name:"Candied Apple (NJ-invented, 1908 Newark)",tier:3,cat:"NJ Classics",cal:250,protein:0,sugar:60,addedSugar:50,note:"NJ origin. Corn syrup shell on fruit. Sugar load nullifies apple benefit.",nj:true},
+  {id:85,name:"Funnel Cake (Shore staple)",tier:3,cat:"NJ Classics",cal:760,protein:9,sugar:20,addedSugar:18,note:"Fried dough + powdered sugar. Jersey Shore mandatory. Maximum adipogenic combo.",nj:true},
+  {id:86,name:"Sweetened Iced Tea (Snapple, 16 oz)",tier:3,cat:"Beverages",cal:160,protein:0,sugar:40,addedSugar:40,note:"NJ bodega/deli staple. 'Tea' branding misleads. Pure sugar delivery vehicle.",nj:true},
+  {id:87,name:"Energy Drink (Red Bull / Monster, 16 oz)",tier:3,cat:"Beverages",cal:220,protein:0,sugar:54,addedSugar:54,note:"Sugar + caffeine. Cortisol-mediated visceral fat deposition with chronic use.",nj:false},
+  {id:88,name:"Caramel Macchiato (Starbucks, grande)",tier:3,cat:"Fast Food & Chains",cal:250,protein:8,sugar:34,addedSugar:30,note:"NJ commuter daily. Espresso buried in syrup + whole milk. LAR-unfavorable pattern.",nj:true},
+  {id:89,name:"Frosted Cereal (Froot Loops / Lucky Charms)",tier:3,cat:"Fast Food & Chains",cal:150,protein:2,sugar:15,addedSugar:14,note:"Ultra-processed. Added sugar at breakfast sets AM insulin tone. Closes window rapidly.",nj:false},
+  {id:90,name:"Pop-Tarts (1 pastry)",tier:3,cat:"Fast Food & Chains",cal:200,protein:2,sugar:16,addedSugar:14,note:"Refined carb + sugar + hydrogenated oil. Convenient but metabolically costly.",nj:false},
+  {id:91,name:"Oreos (3 cookies)",tier:3,cat:"Snacks",cal:160,protein:1,sugar:14,addedSugar:14,note:"Ultra-processed. Studies show cheese-equivalent addictive signaling.",nj:false},
+  {id:92,name:"Candy Bar (Twix / Snickers, 1 bar)",tier:3,cat:"Snacks",cal:280,protein:4,sugar:28,addedSugar:27,note:"Saturated fat + sugar co-loading = adipogenic synergy. No redeeming macro profile.",nj:false},
+  {id:93,name:"Gummy Bears / Candy (1 bag, 1.5 oz)",tier:3,cat:"Snacks",cal:140,protein:3,sugar:28,addedSugar:28,note:"Pure sugar. No fiber, no protein, no fat to slow absorption. LAR worst-case.",nj:false},
+  {id:94,name:"Chocolate Chip Cookies (2 large, commercial)",tier:3,cat:"Snacks",cal:320,protein:4,sugar:30,addedSugar:28,note:"Added sugar + refined carb + saturated fat. All adiposity biomarkers unfavorable.",nj:false},
+  {id:95,name:"Cheez-Its / Goldfish Crackers (1 oz)",tier:3,cat:"Snacks",cal:150,protein:3,sugar:0,addedSugar:0,note:"Ultra-processed refined grain. Hyper-palatable — portion control is extremely difficult.",nj:false},
+  {id:96,name:"Loaded Potato Skins (4 halves)",tier:3,cat:"Diner & Takeout",cal:480,protein:15,sugar:3,addedSugar:1,note:"NJ sports bar staple. Saturated fat (bacon + cheese + sour cream) + refined starch.",nj:true},
+  {id:97,name:"Ice Cream Sundae (diner, 2 scoops + toppings)",tier:3,cat:"Diner & Takeout",cal:500,protein:8,sugar:55,addedSugar:45,note:"Sugar + saturated fat co-load. Insulin spike then fat storage signaling.",nj:true},
+  {id:98,name:"Craft Beer (IPA, 16 oz)",tier:3,cat:"Beverages",cal:200,protein:2,sugar:8,addedSugar:0,note:"NJ has 130+ craft breweries. Alcohol suppresses fat oxidation. Estrogenic hops = visceral risk.",nj:true},
+  {id:99,name:"Cotton Candy (festival, 1 bag)",tier:3,cat:"NJ Classics",cal:105,protein:0,sugar:26,addedSugar:26,note:"Pure spun sugar. Zero nutrient density. Shore/festival staple.",nj:true},
+  {id:100,name:"Large Crumb Cake (NJ diner, full slice)",tier:3,cat:"NJ Classics",cal:500,protein:6,sugar:40,addedSugar:35,note:"NJ German-heritage icon. Full diner slice exceeds daily added sugar limit in one serving.",nj:true},
+  // ── PHOTO-SUBMITTED ENTRIES ───────────────────────────────────────────────
+  {id:101,name:"Wild Planet Albacore Tuna (1 can, 142g)",tier:1,cat:"Dairy & Protein",cal:180,protein:33,sugar:0,addedSugar:0,note:"Catalog-best protein density: 33g per can. 2-ingredient label (tuna + sea salt). Vit D at 90% DV — directly supports LAR improvement. Pole & line albacore = lower mercury. Zero glycemic load. Priority protein for closing-window patients.",nj:false},
+];
+
+// State
+let tierFilter = 0;
+let catFilter = "All Categories";
+let njOnly = false;
+
+// Build category select
+const cats = ["All Categories", ...new Set(FOODS.map(f => f.cat))];
+const sel = document.getElementById('catSelect');
+cats.forEach(c => { const o = document.createElement('option'); o.value = o.text = c; sel.appendChild(o); });
+sel.onchange = render;
+
+function setTier(t) {
+  tierFilter = tierFilter === t ? 0 : t;
+  document.querySelectorAll('.tier-tab').forEach((b,i) => {
+    b.className = 'tier-tab';
+    if (i === 0 && tierFilter === 0) b.classList.add('active-all');
+    if (i === t && t > 0) b.classList.add('active-' + t);
+  });
+  render();
+}
+
+function toggleNJ() {
+  njOnly = !njOnly;
+  document.getElementById('njBtn').classList.toggle('active', njOnly);
+  render();
+}
+
+function getFiltered() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  return FOODS.filter(f => {
+    if (tierFilter && f.tier !== tierFilter) return false;
+    if (catFilter !== "All Categories" && f.cat !== catFilter) return false;
+    if (njOnly && !f.nj) return false;
+    if (q && !f.name.toLowerCase().includes(q) && !f.cat.toLowerCase().includes(q)) return false;
+    return true;
+  });
+}
+
+function render() {
+  catFilter = document.getElementById('catSelect').value;
+  const foods = getFiltered();
+  document.getElementById('resultCount').textContent = `Showing ${foods.length} of ${FOODS.length} foods`;
+  const main = document.getElementById('main');
+  main.innerHTML = '';
+
+  if (!foods.length) {
+    main.innerHTML = '<div class="empty">No foods match your filters.</div>';
+    return;
+  }
+
+  if (tierFilter === 0) {
+    [1,2,3,'photo'].forEach(t => {
+      let group;
+      if (t === 'photo') {
+        group = foods.filter(f => f.id > 100);
+      } else {
+        group = foods.filter(f => f.tier === t && f.id <= 100);
+      }
+      if (!group.length) return;
+      const tc = t === 'photo' ? {color:'#4a9eff',emoji:'📷',label:'Photo-Submitted Entries'} : T[t];
+      const sec = document.createElement('div');
+      sec.innerHTML = `
+        <div class="section-head ${t==='photo'?'photo-section-head':''}" style="border-color:${tc.color}44">
+          <span style="font-size:16px">${tc.emoji}</span>
+          <div>
+            <div class="section-head-title ${t==='photo'?'photo-section-title':''}" style="color:${tc.color}">${tc.label}</div>
+            <div class="section-head-count">${group.length} food${group.length!==1?'s':''}</div>
+          </div>
+        </div>
+        <div class="food-grid">${group.map(cardHTML).join('')}</div>
+      `;
+      main.appendChild(sec);
+    });
+  } else {
+    const grid = document.createElement('div');
+    grid.className = 'food-grid';
+    grid.innerHTML = foods.map(cardHTML).join('');
+    main.appendChild(grid);
+  }
+
+  // Attach hover
+  main.querySelectorAll('.card').forEach(card => {
+    const t = +card.dataset.tier;
+    const col = T[t].color;
+    card.addEventListener('mouseenter', () => { card.style.borderColor = col+'88'; card.style.background = '#111827'; });
+    card.addEventListener('mouseleave', () => { card.style.borderColor = 'transparent'; card.style.background = '#0f1724'; });
+    card.addEventListener('click', () => openModal(+card.dataset.id));
+  });
+}
+
+function cardHTML(f) {
+  const tc = T[f.tier];
+  const sugarColor = f.addedSugar > 10 ? '#ef4444' : f.addedSugar > 3 ? '#f59e0b' : '#4a5568';
+  return `<div class="card" data-id="${f.id}" data-tier="${f.tier}" style="border-color:${tc.color}18">
+    <div class="card-top">
+      <span class="tier-badge" style="color:${tc.color};background:${tc.color}18">${tc.emoji} Tier ${f.tier}</span>
+      ${f.nj ? '<span class="nj-badge">🌿 NJ</span>' : ''}
+    </div>
+    <div class="card-name">${f.name}</div>
+    <div class="chip-row">
+      <span class="chip" style="color:#a0aec0;background:#a0aec022">${f.cal} cal</span>
+      <span class="chip" style="color:#22c55e;background:#22c55e18">${f.protein}g prot</span>
+      <span class="chip" style="color:${sugarColor};background:${sugarColor}18">${f.addedSugar}g added ✦</span>
+    </div>
+    <div class="card-cat">${f.cat}</div>
+  </div>`;
+}
+
+function openModal(id) {
+  const f = FOODS.find(x => x.id === id);
+  const tc = T[f.tier];
+  document.getElementById('m-tier-badge').textContent = `${tc.emoji} ${tc.label}`;
+  document.getElementById('m-tier-badge').style.color = tc.color;
+  document.getElementById('m-tier-badge').style.background = tc.color + '22';
+  document.getElementById('m-name').textContent = f.name;
+  document.getElementById('m-nj').textContent = f.nj ? '🌿 NJ Iconic' : '';
+  document.getElementById('m-cal').textContent = f.cal + ' kcal';
+  document.getElementById('m-prot').textContent = f.protein + 'g';
+  document.getElementById('m-sug').textContent = f.sugar + 'g';
+  document.getElementById('m-asug').textContent = f.addedSugar + 'g';
+  document.getElementById('m-note').textContent = f.note;
+  document.getElementById('m-note-label').style.color = tc.color;
+  document.getElementById('m-note-box').style.borderColor = tc.color;
+  document.getElementById('m-cat').textContent = 'Category: ' + f.cat;
+  document.getElementById('modal-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal(e) {
+  if (e.target === document.getElementById('modal-overlay')) closeModalDirect();
+}
+function closeModalDirect() {
+  document.getElementById('modal-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// Init
+setTier(0);
+render();
+</script>
+</body>
+</html>
