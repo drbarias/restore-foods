@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="RESTORE Guide">
+<meta name="theme-color" content="#0a0f1a">
+<title>RESTORE Food Guide</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{
+  --bg:#0a0f1a;--surface:#111827;--surface2:#1a2332;--border:#1e2a3a;
+  --text:#f0ece4;--muted:#7a8a9a;--dim:#4a5568;
+  --g:#22c55e;--g-bg:#052e1688;--g-border:#16a34a;
+  --y:#f59e0b;--y-bg:#1c140888;--y-border:#d97706;
+  --r:#ef4444;--r-bg:#1f0a0a88;--r-border:#dc2626;
+  --accent:#4a9eff;
+  --mono:'Courier New',monospace;
+  --radius:16px;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;overflow:hidden;}
+
+/* ── SCREENS ── */
+.screen{position:fixed;inset:0;display:flex;flex-direction:column;overflow-y:auto;transition:opacity .3s,transform .3s;}
+.screen.hidden{opacity:0;pointer-events:none;transform:translateY(20px);}
+
+/* ── ONBOARDING ── */
+#onboarding{background:linear-gradient(160deg,#0f1a2e 0%,#0a0f1a 60%);}
+.ob-logo{text-align:center;padding:60px 24px 24px;}
+.ob-logo-text{font-size:13px;letter-spacing:4px;color:var(--accent);font-family:var(--mono);text-transform:uppercase;margin-bottom:8px;}
+.ob-title{font-size:32px;font-weight:800;color:var(--text);line-height:1.1;}
+.ob-title span{color:var(--accent);}
+.ob-sub{font-size:14px;color:var(--muted);margin-top:10px;line-height:1.6;max-width:300px;margin-left:auto;margin-right:auto;}
+.ob-windows{padding:0 24px;margin-top:8px;}
+.ob-label{font-size:11px;font-family:var(--mono);color:var(--muted);text-align:center;letter-spacing:2px;margin-bottom:16px;}
+.window-btn{width:100%;padding:18px 20px;border-radius:var(--radius);border:1.5px solid;background:transparent;margin-bottom:12px;cursor:pointer;text-align:left;transition:all .2s;display:flex;align-items:center;gap:16px;}
+.window-btn:active{transform:scale(.98);}
+.window-btn.w1{border-color:var(--g-border);} .window-btn.w1:hover,.window-btn.w1.sel{background:var(--g-bg);border-color:var(--g);}
+.window-btn.w2{border-color:var(--y-border);} .window-btn.w2:hover,.window-btn.w2.sel{background:var(--y-bg);border-color:var(--y);}
+.window-btn.w3{border-color:var(--r-border);} .window-btn.w3:hover,.window-btn.w3.sel{background:var(--r-bg);border-color:var(--r);}
+.window-btn.w0{border-color:var(--dim);}  .window-btn.w0:hover,.window-btn.w0.sel{background:#ffffff11;border-color:var(--muted);}
+.wb-emoji{font-size:28px;line-height:1;}
+.wb-text{}
+.wb-name{font-size:15px;font-weight:700;color:var(--text);}
+.wb-desc{font-size:12px;color:var(--muted);margin-top:2px;line-height:1.4;}
+.ob-continue{margin:8px 24px 40px;padding:16px;background:var(--accent);border:none;border-radius:var(--radius);color:#fff;font-size:16px;font-weight:700;cursor:pointer;width:calc(100% - 48px);letter-spacing:.5px;transition:.15s;}
+.ob-continue:disabled{opacity:.3;cursor:not-allowed;}
+.ob-continue:active{opacity:.85;}
+
+/* ── MAIN SCAN SCREEN ── */
+#scan{background:var(--bg);}
+.scan-header{padding:52px 20px 16px;display:flex;justify-content:space-between;align-items:center;background:linear-gradient(180deg,#0f1a2e 0%,var(--bg) 100%);}
+.scan-logo{font-family:var(--mono);font-size:11px;letter-spacing:3px;color:var(--accent);text-transform:uppercase;}
+.window-pill{padding:6px 14px;border-radius:20px;border:1px solid;font-size:11px;font-family:var(--mono);cursor:pointer;transition:.15s;}
+.window-pill:active{opacity:.7;}
+
+.scan-hero{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px 24px;min-height:50vh;}
+.scan-prompt{text-align:center;margin-bottom:32px;}
+.scan-prompt h2{font-size:22px;font-weight:700;color:var(--text);line-height:1.3;}
+.scan-prompt p{font-size:14px;color:var(--muted);margin-top:8px;line-height:1.5;}
+
+.camera-btn{width:140px;height:140px;border-radius:50%;background:linear-gradient(135deg,var(--accent) 0%,#2563eb 100%);border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;box-shadow:0 8px 32px #4a9eff44;transition:.2s;position:relative;overflow:hidden;}
+.camera-btn::after{content:'';position:absolute;inset:0;background:rgba(255,255,255,.12);opacity:0;transition:.15s;}
+.camera-btn:active::after{opacity:1;}
+.camera-btn:active{transform:scale(.95);}
+.camera-icon{font-size:44px;line-height:1;}
+.camera-label{font-size:11px;color:rgba(255,255,255,.85);font-family:var(--mono);letter-spacing:1px;}
+
+.or-divider{margin:20px 0;color:var(--dim);font-size:12px;font-family:var(--mono);display:flex;align-items:center;gap:12px;width:200px;}
+.or-divider::before,.or-divider::after{content:'';flex:1;height:1px;background:var(--border);}
+
+.gallery-btn{padding:12px 28px;border-radius:30px;border:1px solid var(--border);background:var(--surface);color:var(--muted);font-size:13px;cursor:pointer;transition:.15s;}
+.gallery-btn:active{background:var(--surface2);}
+
+/* ── ANALYZING ── */
+#analyzing{background:var(--bg);align-items:center;justify-content:center;gap:24px;}
+.preview-img{width:220px;height:220px;border-radius:20px;object-fit:cover;border:2px solid var(--border);}
+.analyzing-text{font-family:var(--mono);color:var(--muted);font-size:13px;text-align:center;}
+.pulse-ring{width:240px;height:240px;border-radius:50%;border:2px solid var(--accent);position:absolute;animation:pulse 1.8s ease-out infinite;opacity:.6;}
+.pulse-ring:nth-child(2){animation-delay:.6s;}
+.pulse-ring:nth-child(3){animation-delay:1.2s;}
+@keyframes pulse{0%{transform:scale(.85);opacity:.7}100%{transform:scale(1.4);opacity:0}}
+.pulse-wrap{position:relative;display:flex;align-items:center;justify-content:center;}
+.analyzing-label{font-size:15px;color:var(--text);font-weight:600;margin-top:8px;}
+.dots::after{content:'';animation:dots 1.5s steps(4,end) infinite;}
+@keyframes dots{0%,20%{content:''}40%{content:'.'}60%{content:'..'}80%,100%{content:'...'}}
+
+/* ── RESULT ── */
+#result{background:var(--bg);}
+.result-header{padding:52px 20px 16px;display:flex;justify-content:space-between;align-items:center;}
+.back-btn{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 16px;color:var(--muted);font-size:13px;cursor:pointer;}
+.result-body{padding:0 20px 40px;display:flex;flex-direction:column;align-items:center;}
+.result-img{width:140px;height:140px;border-radius:16px;object-fit:cover;border:2px solid var(--border);margin-bottom:20px;}
+
+.verdict-card{width:100%;border-radius:20px;padding:28px 24px;text-align:center;border:2px solid;margin-bottom:20px;position:relative;overflow:hidden;}
+.verdict-card::before{content:'';position:absolute;inset:0;opacity:.08;}
+.verdict-emoji{font-size:64px;line-height:1;margin-bottom:12px;display:block;}
+.verdict-word{font-size:36px;font-weight:900;letter-spacing:1px;margin-bottom:12px;}
+.verdict-reason{font-size:15px;line-height:1.6;opacity:.9;}
+
+.verdict-card.yes{border-color:var(--g);background:var(--g-bg);}
+.verdict-card.yes .verdict-word{color:var(--g);}
+.verdict-card.caution{border-color:var(--y);background:var(--y-bg);}
+.verdict-card.caution .verdict-word{color:var(--y);}
+.verdict-card.no{border-color:var(--r);background:var(--r-bg);}
+.verdict-card.no .verdict-word{color:var(--r);}
+
+.window-context{width:100%;background:var(--surface);border-radius:12px;padding:14px 16px;margin-bottom:16px;display:flex;align-items:center;gap:12px;}
+.wc-label{font-size:11px;color:var(--muted);font-family:var(--mono);}
+.wc-val{font-size:13px;color:var(--text);font-weight:600;}
+
+/* EXPAND DETAILS */
+.expand-btn{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 18px;color:var(--muted);font-size:13px;cursor:pointer;text-align:left;display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;transition:.15s;}
+.expand-btn:active{background:var(--surface2);}
+.expand-arrow{transition:transform .2s;}
+.expand-arrow.open{transform:rotate(180deg);}
+.details-panel{background:var(--surface);border-radius:12px;padding:16px;margin-bottom:12px;display:none;}
+.details-panel.open{display:block;}
+.macro-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
+.macro-box{background:var(--bg);border-radius:10px;padding:12px;}
+.macro-label{font-size:10px;color:var(--dim);font-family:var(--mono);margin-bottom:4px;}
+.macro-val{font-size:20px;font-weight:800;color:var(--text);}
+.restore-note{font-size:13px;color:#a0aec0;line-height:1.7;padding:12px;border-radius:8px;border-left:3px solid var(--accent);background:var(--bg);}
+
+.scan-again-btn{width:100%;padding:18px;background:var(--accent);border:none;border-radius:var(--radius);color:#fff;font-size:16px;font-weight:700;cursor:pointer;letter-spacing:.5px;transition:.15s;margin-bottom:12px;}
+.scan-again-btn:active{opacity:.85;}
+.change-window-btn{width:100%;padding:14px;background:transparent;border:1px solid var(--border);border-radius:var(--radius);color:var(--muted);font-size:14px;cursor:pointer;transition:.15s;}
+.change-window-btn:active{background:var(--surface);}
+
+/* ── ERROR ── */
+.error-card{background:#1f0a0a;border:1px solid var(--r-border);border-radius:12px;padding:20px;text-align:center;margin:20px;}
+.error-card p{color:#fca5a5;font-size:14px;line-height:1.6;}
+.retry-btn{margin-top:14px;padding:10px 24px;background:var(--r);border:none;border-radius:8px;color:#fff;font-size:13px;cursor:pointer;}
+
+/* ── HIDDEN FILE INPUT ── */
+#fileInput{display:none;}
+</style>
+</head>
+<body>
+
+<!-- ── SCREEN 1: ONBOARDING ── -->
+<div class="screen" id="onboarding">
+  <div class="ob-logo">
+    <div class="ob-logo-text">RESTORE Protocol</div>
+    <div class="ob-title">Know Your<br><span>Window.</span></div>
+    <div class="ob-sub">Point your camera at any food item and instantly know if it supports your metabolic health — based on your window.</div>
+  </div>
+
+  <div class="ob-windows">
+    <div class="ob-label">WHAT IS YOUR WINDOW?</div>
+
+    <button class="window-btn w1" onclick="selectWindow(1)">
+      <span class="wb-emoji">🟢</span>
+      <div class="wb-text">
+        <div class="wb-name">Open Window</div>
+        <div class="wb-desc">My doctor said my metabolic health is still fully reversible</div>
+      </div>
+    </button>
+
+    <button class="window-btn w2" onclick="selectWindow(2)">
+      <span class="wb-emoji">🟡</span>
+      <div class="wb-text">
+        <div class="wb-name">Narrowing Window</div>
+        <div class="wb-desc">My doctor said my window is getting smaller — I need to be more careful</div>
+      </div>
+    </button>
+
+    <button class="window-btn w3" onclick="selectWindow(3)">
+      <span class="wb-emoji">🔴</span>
+      <div class="wb-text">
+        <div class="wb-name">Closing Window</div>
+        <div class="wb-desc">My doctor said my window is nearly closed — diet is critical now</div>
+      </div>
+    </button>
+
+    <button class="window-btn w0" onclick="selectWindow(0)">
+      <span class="wb-emoji">❓</span>
+      <div class="wb-text">
+        <div class="wb-name">I Don't Know Yet</div>
+        <div class="wb-desc">I haven't been assessed — show me general metabolic guidance</div>
+      </div>
+    </button>
+  </div>
+
+  <button class="ob-continue" id="continueBtn" onclick="confirmWindow()" disabled>
+    Get Started →
+  </button>
+</div>
+
+<!-- ── SCREEN 2: SCAN ── -->
+<div class="screen hidden" id="scan">
+  <div class="scan-header">
+    <div class="scan-logo">RESTORE Guide</div>
+    <button class="window-pill" id="windowPill" onclick="changeWindow()"></button>
+  </div>
+
+  <div class="scan-hero">
+    <div class="scan-prompt">
+      <h2>Scan a food item</h2>
+      <p>Point your camera at any food, label, or package for an instant RESTORE verdict</p>
+    </div>
+
+    <button class="camera-btn" onclick="openCamera()">
+      <span class="camera-icon">📷</span>
+      <span class="camera-label">SCAN</span>
+    </button>
+
+    <div class="or-divider">or</div>
+
+    <button class="gallery-btn" onclick="openGallery()">Choose from Library</button>
+  </div>
+</div>
+
+<!-- ── SCREEN 3: ANALYZING ── -->
+<div class="screen hidden" id="analyzing">
+  <div class="pulse-wrap" style="margin-top:120px;">
+    <div class="pulse-ring"></div>
+    <div class="pulse-ring"></div>
+    <div class="pulse-ring"></div>
+    <img id="previewImg" class="preview-img" src="" alt="Food preview">
+  </div>
+  <div style="text-align:center;margin-top:32px;padding:0 40px;">
+    <div class="analyzing-label">Analyzing your food<span class="dots"></span></div>
+    <div class="analyzing-text" style="margin-top:8px;">Checking against RESTORE protocol</div>
+  </div>
+</div>
+
+<!-- ── SCREEN 4: RESULT ── -->
+<div class="screen hidden" id="result">
+  <div class="result-header">
+    <button class="back-btn" onclick="showScan()">← Scan Again</button>
+    <div style="font-family:var(--mono);font-size:10px;color:var(--dim);letter-spacing:2px;">RESTORE GUIDE</div>
+  </div>
+
+  <div class="result-body">
+    <img id="resultImg" class="result-img" src="" alt="">
+
+    <div class="window-context">
+      <span id="wcEmoji" style="font-size:20px"></span>
+      <div>
+        <div class="wc-label">YOUR WINDOW</div>
+        <div class="wc-val" id="wcVal"></div>
+      </div>
+    </div>
+
+    <div class="verdict-card" id="verdictCard">
+      <span class="verdict-emoji" id="verdictEmoji"></span>
+      <div class="verdict-word" id="verdictWord"></div>
+      <div class="verdict-reason" id="verdictReason"></div>
+    </div>
+
+    <button class="expand-btn" id="expandBtn" onclick="toggleDetails()">
+      <span>See nutrition details</span>
+      <span class="expand-arrow" id="expandArrow">▼</span>
+    </button>
+
+    <div class="details-panel" id="detailsPanel">
+      <div class="macro-row">
+        <div class="macro-box"><div class="macro-label">CALORIES</div><div class="macro-val" id="dCal">—</div></div>
+        <div class="macro-box"><div class="macro-label">PROTEIN</div><div class="macro-val" id="dProt">—</div></div>
+        <div class="macro-box"><div class="macro-label">TOTAL SUGAR</div><div class="macro-val" id="dSug">—</div></div>
+        <div class="macro-box"><div class="macro-label">ADDED SUGAR</div><div class="macro-val" id="dAsug">—</div></div>
+      </div>
+      <div class="restore-note" id="dNote"></div>
+    </div>
+
+    <button class="scan-again-btn" onclick="showScan()">Scan Another Item</button>
+    <button class="change-window-btn" onclick="changeWindow()">Change My Window</button>
+
+    <div style="font-size:11px;color:var(--dim);text-align:center;margin-top:16px;line-height:1.6;padding:0 20px;">
+      This is dietary guidance only — not a prescription.<br>You make the final decision.
+    </div>
+  </div>
+</div>
+
+<input type="file" id="fileInput" accept="image/*" onchange="handleFile(event)">
+
+<script>
+const API_KEY = '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';
+const MODEL   = 'claude-sonnet-4-20250514';
+
+const WINDOWS = {
+  0: { label: "General Guidance", emoji: "❓", short: "❓ General" },
+  1: { label: "Open Window",      emoji: "🟢", short: "🟢 Open" },
+  2: { label: "Narrowing Window", emoji: "🟡", short: "🟡 Narrowing" },
+  3: { label: "Closing Window",   emoji: "🔴", short: "🔴 Closing" },
+};
+
+const SYSTEM_PROMPT = `You are a dietary guidance assistant for the RESTORE protocol — a framework developed by Dr. Emmanuel Barias MD for patients with pathological adiposity.
+
+RESTORE classifies patients into three metabolic windows:
+- Open Window: adiposity still fully reversible. Goal is to keep the window open.
+- Narrowing Window: reversal getting harder. Precision nutrition needed.
+- Closing Window: near-irreversible metabolic state. Diet is critical.
+
+Your job is to evaluate a food item the patient has photographed and return a verdict based on their window.
+
+CLASSIFICATION RULES:
+
+Tier 1 foods (Window-Preserving) = YES for ALL windows:
+- High protein density (more than 10g per 150 kcal)
+- Zero or near-zero added sugar (0-2g)
+- Low glycemic load
+- Anti-inflammatory ingredients
+- Minimal processing
+- Examples: Greek yogurt (plain), eggs, tuna, salmon, edamame, berries, leafy greens, nuts (unsalted/unsweetened)
+
+Tier 2 foods (Portion-Dependent) = YES for Open, CAUTION for Narrowing, NO for Closing:
+- Moderate protein, moderate carbohydrate
+- Low-to-moderate added sugar (3-10g)
+- Some processing acceptable
+- Examples: bagels, oatmeal, whole grain bread, bananas, natural peanut butter, thin-crust pizza (1 slice), latte (no syrup)
+
+Tier 3 foods (Window-Closing) = NO for ALL windows:
+- High added sugar (more than 10g)
+- Ultra-processed ingredients
+- Refined carb + saturated fat combination
+- Liquid calories with no fiber or protein offset
+- Hyper-palatable design
+- Examples: soda, candy bars, donuts, milkshakes, energy drinks, frosted cereals, french fries
+
+For patients who say they don't know their window yet, evaluate based on general metabolic health principles and gently encourage them to ask their doctor about RESTORE.
+
+RESPONSE FORMAT — respond ONLY with valid JSON, no other text:
+{
+  "verdict": "YES" or "CAUTION" or "NO",
+  "food_name": "name of the food identified",
+  "reason": "one plain-English sentence (max 20 words) explaining the verdict — no jargon, patient-facing",
+  "calories": number or null if unknown,
+  "protein_g": number or null if unknown,
+  "total_sugar_g": number or null if unknown,
+  "added_sugar_g": number or null if unknown,
+  "restore_note": "2-3 sentences of clinical context for the patient — friendly, non-prescriptive",
+  "ask_doctor": true or false (true only if window is unknown)
+}
+
+Critical rules:
+- Never tell the patient what to do — only inform and guide
+- Never use clinical jargon (no HOMA-IR, LAR, hsCRP) in patient-facing fields
+- Be honest: if a food is clearly harmful, say NO clearly but kindly
+- If the image is unclear or not a food, return verdict "CAUTION" and explain in reason
+- The patient makes their own final decision always`;
+
+let currentWindow = null;
+let selectedWindow = null;
+let currentImageData = null;
+let detailsOpen = false;
+
+// ── INIT ──────────────────────────────────────────────────────────────────
+window.onload = () => {
+  const saved = localStorage.getItem('restore_window');
+  if (saved !== null) {
+    currentWindow = parseInt(saved);
+    showScan();
+  }
+};
+
+// ── WINDOW SELECTION ──────────────────────────────────────────────────────
+function selectWindow(w) {
+  selectedWindow = w;
+  document.querySelectorAll('.window-btn').forEach(b => b.classList.remove('sel'));
+  document.querySelectorAll('.window-btn')[w === 0 ? 3 : w-1].classList.add('sel');
+  document.getElementById('continueBtn').disabled = false;
+}
+
+function confirmWindow() {
+  if (selectedWindow === null) return;
+  currentWindow = selectedWindow;
+  localStorage.setItem('restore_window', currentWindow);
+  showScan();
+}
+
+function changeWindow() {
+  selectedWindow = null;
+  document.querySelectorAll('.window-btn').forEach(b => b.classList.remove('sel'));
+  document.getElementById('continueBtn').disabled = true;
+  showScreen('onboarding');
+}
+
+// ── NAVIGATION ────────────────────────────────────────────────────────────
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+  window.scrollTo(0,0);
+}
+
+function showScan() {
+  const w = WINDOWS[currentWindow];
+  const pill = document.getElementById('windowPill');
+  pill.textContent = w.short;
+  pill.style.borderColor = currentWindow===1?'var(--g-border)':currentWindow===2?'var(--y-border)':currentWindow===3?'var(--r-border)':'var(--dim)';
+  pill.style.color = currentWindow===1?'var(--g)':currentWindow===2?'var(--y)':currentWindow===3?'var(--r)':'var(--muted)';
+  showScreen('scan');
+}
+
+// ── CAMERA ────────────────────────────────────────────────────────────────
+function openCamera() {
+  const input = document.getElementById('fileInput');
+  input.setAttribute('capture', 'environment');
+  input.click();
+}
+
+function openGallery() {
+  const input = document.getElementById('fileInput');
+  input.removeAttribute('capture');
+  input.click();
+}
+
+function handleFile(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  e.target.value = '';
+
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    currentImageData = ev.target.result;
+    document.getElementById('previewImg').src = currentImageData;
+    document.getElementById('resultImg').src = currentImageData;
+    showScreen('analyzing');
+    analyze(currentImageData);
+  };
+  reader.readAsDataURL(file);
+}
+
+// ── ANALYZE ───────────────────────────────────────────────────────────────
+async function analyze(dataUrl) {
+  const base64 = dataUrl.split(',')[1];
+  const mediaType = dataUrl.split(';')[0].split(':')[1];
+
+  const windowDesc = currentWindow === 0
+    ? "The patient does not know their window yet."
+    : `The patient is in the ${WINDOWS[currentWindow].label}.`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': API_KEY,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        max_tokens: 800,
+        system: SYSTEM_PROMPT,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
+            { type: 'text', text: `${windowDesc} Please evaluate this food item and return your JSON verdict.` }
+          ]
+        }]
+      })
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error?.message || 'API error');
+    }
+
+    const data = await res.json();
+    const raw = data.content[0].text.trim();
+    const clean = raw.replace(/```json|```/g, '').trim();
+    const result = JSON.parse(clean);
+    showResult(result);
+
+  } catch(e) {
+    showError(e.message);
+  }
+}
+
+// ── RESULT ────────────────────────────────────────────────────────────────
+function showResult(r) {
+  const v = r.verdict.toUpperCase();
+  const card = document.getElementById('verdictCard');
+  card.className = 'verdict-card ' + (v==='YES'?'yes':v==='CAUTION'?'caution':'no');
+
+  document.getElementById('verdictEmoji').textContent = v==='YES'?'✅':v==='CAUTION'?'⚠️':'🚫';
+  document.getElementById('verdictWord').textContent = v;
+  document.getElementById('verdictReason').textContent = r.reason;
+
+  const w = WINDOWS[currentWindow];
+  document.getElementById('wcEmoji').textContent = w.emoji;
+  document.getElementById('wcVal').textContent = w.label;
+
+  // Details
+  document.getElementById('dCal').textContent  = r.calories      != null ? r.calories + ' kcal' : '—';
+  document.getElementById('dProt').textContent = r.protein_g     != null ? r.protein_g + 'g'    : '—';
+  document.getElementById('dSug').textContent  = r.total_sugar_g != null ? r.total_sugar_g + 'g': '—';
+  document.getElementById('dAsug').textContent = r.added_sugar_g != null ? r.added_sugar_g + 'g': '—';
+  document.getElementById('dNote').textContent = r.restore_note || '';
+
+  if (r.ask_doctor) {
+    document.getElementById('dNote').textContent +=
+      ' Ask your doctor about the RESTORE framework to find out which window you are in.';
+  }
+
+  // Reset expand
+  detailsOpen = false;
+  document.getElementById('detailsPanel').classList.remove('open');
+  document.getElementById('expandArrow').classList.remove('open');
+
+  showScreen('result');
+}
+
+function toggleDetails() {
+  detailsOpen = !detailsOpen;
+  document.getElementById('detailsPanel').classList.toggle('open', detailsOpen);
+  document.getElementById('expandArrow').classList.toggle('open', detailsOpen);
+  document.getElementById('expandBtn').querySelector('span').textContent =
+    detailsOpen ? 'Hide nutrition details' : 'See nutrition details';
+}
+
+function showError(msg) {
+  showScreen('result');
+  document.getElementById('resultImg').style.display = 'none';
+  document.getElementById('verdictCard').innerHTML = `
+    <div class="error-card">
+      <p>Something went wrong analyzing this image.<br><br>${msg}</p>
+      <button class="retry-btn" onclick="showScan()">Try Again</button>
+    </div>`;
+  document.getElementById('verdictCard').className = '';
+  document.getElementById('verdictCard').style.border = 'none';
+  document.getElementById('verdictCard').style.padding = '0';
+  document.getElementById('expandBtn').style.display = 'none';
+}
+</script>
+</body>
+</html>
