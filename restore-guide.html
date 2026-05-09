@@ -140,6 +140,46 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-
 </head>
 <body>
 
+<!-- ── SCREEN 0: API KEY SETUP ── -->
+<div class="screen hidden" id="keysetup">
+  <div style="padding:60px 28px 40px;display:flex;flex-direction:column;min-height:100vh;background:linear-gradient(160deg,#0f1a2e 0%,#0a0f1a 60%);">
+    <div style="text-align:center;margin-bottom:40px;">
+      <div style="font-family:var(--mono);font-size:11px;letter-spacing:3px;color:var(--accent);margin-bottom:12px;">RESTORE GUIDE</div>
+      <div style="font-size:28px;font-weight:800;color:var(--text);line-height:1.2;margin-bottom:12px;">One-Time Setup</div>
+      <div style="font-size:14px;color:var(--muted);line-height:1.6;">To analyze food photos, this app needs your Anthropic API key. It is stored only on your device and never shared.</div>
+    </div>
+
+    <div style="background:var(--surface);border-radius:16px;padding:24px;margin-bottom:20px;">
+      <div style="font-size:12px;font-family:var(--mono);color:var(--muted);letter-spacing:1px;margin-bottom:8px;">HOW TO GET YOUR KEY</div>
+      <div style="font-size:13px;color:var(--text);line-height:1.8;">
+        1. Go to <span style="color:var(--accent);font-family:var(--mono);">console.anthropic.com</span><br>
+        2. Click <strong>API Keys</strong> in the left sidebar<br>
+        3. Click <strong>Create Key</strong><br>
+        4. Name it: <span style="color:var(--accent);font-family:var(--mono);">restore-guide</span><br>
+        5. Copy the key (starts with <span style="color:var(--accent);font-family:var(--mono);">sk-ant-</span>)<br>
+        6. Paste it below
+      </div>
+    </div>
+
+    <div style="margin-bottom:12px;">
+      <div style="font-size:11px;font-family:var(--mono);color:var(--muted);letter-spacing:1px;margin-bottom:8px;">YOUR API KEY</div>
+      <input id="apiKeyInput" type="password"
+        placeholder="sk-ant-..."
+        style="width:100%;padding:14px 16px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;color:var(--text);font-size:14px;font-family:var(--mono);outline:none;-webkit-appearance:none;">
+      <div id="keyError" style="color:#fca5a5;font-size:12px;margin-top:6px;min-height:18px;"></div>
+    </div>
+
+    <button onclick="saveApiKey()"
+      style="width:100%;padding:16px;background:var(--accent);border:none;border-radius:14px;color:#fff;font-size:16px;font-weight:700;cursor:pointer;letter-spacing:.5px;margin-bottom:16px;">
+      Save & Continue →
+    </button>
+
+    <div style="font-size:11px;color:var(--dim);text-align:center;line-height:1.6;">
+      Your key is stored only on this device.<br>It is never sent to any server other than Anthropic.
+    </div>
+  </div>
+</div>
+
 <!-- ── SCREEN 1: ONBOARDING ── -->
 <div class="screen" id="onboarding">
   <div class="ob-logo">
@@ -278,7 +318,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-
 <input type="file" id="fileInput" accept="image/*" onchange="handleFile(event)">
 
 <script>
-const API_KEY = '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';
+const API_KEY = localStorage.getItem('restore_api_key') || '';
 const MODEL   = 'claude-sonnet-4-20250514';
 
 const WINDOWS = {
@@ -350,12 +390,28 @@ let detailsOpen = false;
 
 // ── INIT ──────────────────────────────────────────────────────────────────
 window.onload = () => {
+  const key = localStorage.getItem('restore_api_key');
+  if (!key) { showScreen('keysetup'); return; }
   const saved = localStorage.getItem('restore_window');
   if (saved !== null) {
     currentWindow = parseInt(saved);
     showScan();
   }
 };
+
+function saveApiKey() {
+  const k = document.getElementById('apiKeyInput').value.trim();
+  if (!k.startsWith('sk-ant-')) {
+    document.getElementById('keyError').textContent = 'Key should start with sk-ant- — please check and try again.';
+    return;
+  }
+  localStorage.setItem('restore_api_key', k);
+  document.getElementById('keyError').textContent = '';
+  // Proceed to onboarding or scan
+  const saved = localStorage.getItem('restore_window');
+  if (saved !== null) { currentWindow = parseInt(saved); showScan(); }
+  else { showScreen('onboarding'); }
+}
 
 // ── WINDOW SELECTION ──────────────────────────────────────────────────────
 function selectWindow(w) {
@@ -426,6 +482,7 @@ function handleFile(e) {
 
 // ── ANALYZE ───────────────────────────────────────────────────────────────
 async function analyze(dataUrl) {
+  const API_KEY = localStorage.getItem('restore_api_key') || '';
   const base64 = dataUrl.split(',')[1];
   const mediaType = dataUrl.split(';')[0].split(':')[1];
 
