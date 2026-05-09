@@ -186,6 +186,9 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-
     <div class="ob-logo-text">RESTORE Protocol</div>
     <div class="ob-title">Know Your<br><span>Window.</span></div>
     <div class="ob-sub">Point your camera at any food item and instantly know if it supports your metabolic health — based on your window.</div>
+    <div style="margin-top:12px;padding:10px 16px;background:#ffffff0d;border-radius:10px;border:1px solid #ffffff15;font-size:12px;color:var(--muted);line-height:1.5;">
+      🌐 Works with food labels in any language — Spanish, Korean, Tagalog, Chinese, Arabic, and more.
+    </div>
   </div>
 
   <div class="ob-windows">
@@ -233,6 +236,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-
 <div class="screen hidden" id="scan">
   <div class="scan-header">
     <div class="scan-logo">RESTORE Guide</div>
+    <button onclick="openOverlay('aboutOverlay')" style="background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:4px 8px;" title="About">&#x2139;</button>
     <button class="window-pill" id="windowPill" onclick="changeWindow()"></button>
   </div>
 
@@ -315,10 +319,55 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-
   </div>
 </div>
 
+
+<!-- ABOUT MODAL -->
+<div class="overlay" id="aboutOverlay" onclick="closeOverlay('aboutOverlay',event)">
+  <div class="sheet" onclick="event.stopPropagation()">
+    <div class="handle"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <div style="font-family:var(--mono);font-size:10px;letter-spacing:3px;color:var(--accent)">ABOUT</div>
+      <button class="sheet-close" onclick="closeOverlay('aboutOverlay')">&#x2715;</button>
+    </div>
+    <div style="text-align:center;padding:20px 0 24px;">
+      <div style="font-size:40px;margin-bottom:12px;">&#x1F966;</div>
+      <div style="font-size:22px;font-weight:800;color:var(--text);line-height:1.2;margin-bottom:8px;">Your food.<br>Your choice.<br>Your window.</div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.6;max-width:280px;margin:0 auto;">A free tool that helps you understand how any food affects your body &#x2014; no diets, no prescriptions, no judgment.</div>
+    </div>
+    <div style="height:1px;background:var(--border);margin:0 0 20px;"></div>
+    <div style="background:var(--surface);border-radius:12px;padding:16px;margin-bottom:12px;">
+      <div style="font-size:10px;color:var(--dim);font-family:var(--mono);letter-spacing:2px;margin-bottom:8px;">CREATED BY</div>
+      <div style="font-size:16px;font-weight:700;color:var(--text);">Emmanuel Salvador L. Barias, MD</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px;line-height:1.5;">Board-Certified Family Medicine Physician<br>Medical Director, Family First Primary Physicians<br>Oakhurst &amp; Brick, New Jersey</div>
+    </div>
+    <button class="expand-btn" id="learnMoreBtn" onclick="toggleLearnMore()" style="margin-bottom:12px;">
+      <span>The science behind it</span>
+      <span class="expand-arrow" id="learnMoreArrow">&#x25BC;</span>
+    </button>
+    <div id="learnMorePanel" style="display:none;margin-bottom:12px;">
+      <div style="background:var(--surface);border-radius:12px;padding:16px;margin-bottom:10px;">
+        <div style="font-size:11px;color:var(--accent);font-family:var(--mono);letter-spacing:2px;margin-bottom:6px;">THE PARW STUDY</div>
+        <div style="font-size:13px;color:var(--muted);line-height:1.6;">This app is part of the <strong style="color:var(--text);">PARW Study</strong> &#x2014; research into how early we can catch and reverse unhealthy fat accumulation in adults. The study follows real patients at two New Jersey sites to see how diet changes their long-term health.</div>
+      </div>
+      <div style="background:var(--surface);border-radius:12px;padding:16px;">
+        <div style="font-size:11px;color:var(--accent);font-family:var(--mono);letter-spacing:2px;margin-bottom:6px;">THE RESTORE PROTOCOL</div>
+        <div style="font-size:13px;color:var(--muted);line-height:1.6;"><strong style="color:var(--text);">RESTORE</strong> is Dr. Barias&#x2019;s framework for guiding patients back to metabolic health &#x2014; using food, not just medication. The Open, Narrowing, and Closing Windows describe where your body stands today. This app puts that framework in your pocket.</div>
+      </div>
+    </div>
+    <div style="background:var(--bg);border-radius:10px;padding:14px;border:1px solid var(--border);margin-bottom:16px;">
+      <div style="font-size:11px;color:var(--dim);line-height:1.6;text-align:center;">This app provides dietary guidance only &#x2014; not medical advice. Always consult your physician before making significant dietary changes. You make the final decision.</div>
+    </div>
+    <div style="text-align:center;font-size:10px;color:var(--dim);font-family:var(--mono);line-height:1.8;">
+      RESTORE Food Guide &middot; &copy; 2026 Emmanuel Salvador L. Barias, MD<br>
+      PARW Study &middot; Family First Primary Physicians &middot; Oakhurst, NJ<br>
+      All rights reserved.
+    </div>
+  </div>
+</div>
+
 <input type="file" id="fileInput" accept="image/*" onchange="handleFile(event)">
 
 <script>
-const API_KEY = localStorage.getItem('restore_api_key') || '';
+const PROXY_URL = 'https://restore-foods.netlify.app/.netlify/functions/classify';
 const MODEL   = 'claude-haiku-4-5-20251001';
 
 const WINDOWS = {
@@ -482,7 +531,6 @@ function handleFile(e) {
 
 // ── ANALYZE ───────────────────────────────────────────────────────────────
 async function analyze(dataUrl) {
-  const API_KEY = localStorage.getItem('restore_api_key') || '';
   const base64 = dataUrl.split(',')[1];
   const mediaType = dataUrl.split(';')[0].split(':')[1];
 
@@ -491,13 +539,10 @@ async function analyze(dataUrl) {
     : `The patient is in the ${WINDOWS[currentWindow].label}.`;
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    const res = await fetch(PROXY_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': API_KEY,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
       },
       body: JSON.stringify({
         model: MODEL,
@@ -583,6 +628,16 @@ function showError(msg) {
   document.getElementById('verdictCard').style.border = 'none';
   document.getElementById('verdictCard').style.padding = '0';
   document.getElementById('expandBtn').style.display = 'none';
+}
+
+function toggleLearnMore() {
+  const panel = document.getElementById('learnMorePanel');
+  const arrow = document.getElementById('learnMoreArrow');
+  const open = panel.style.display === 'block';
+  panel.style.display = open ? 'none' : 'block';
+  arrow.style.transform = open ? '' : 'rotate(180deg)';
+  document.getElementById('learnMoreBtn').querySelector('span').textContent =
+    open ? 'The science behind it' : 'Hide details';
 }
 </script>
 </body>
