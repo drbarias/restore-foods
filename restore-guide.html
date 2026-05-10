@@ -384,12 +384,29 @@ function handleFile(e) {
   if (!file) return;
   e.target.value = '';
   const reader = new FileReader();
+  reader.onerror = () => showError('Could not read image. Please try again.');
   reader.onload = ev => {
-    const data = ev.target.result;
-    document.getElementById('previewImg').src = data;
-    document.getElementById('resultImg').src = data;
-    showScreen('analyzing');
-    analyze(data);
+    const raw = ev.target.result;
+    // Compress to max 1024px JPEG before sending — handles large camera files
+    const img = new Image();
+    img.onerror = () => showError('Could not load image. Please try another photo.');
+    img.onload = () => {
+      const MAX = 1024;
+      let w = img.naturalWidth, h = img.naturalHeight;
+      if (w > MAX || h > MAX) {
+        if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
+        else { w = Math.round(w * MAX / h); h = MAX; }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      const compressed = canvas.toDataURL('image/jpeg', 0.82);
+      document.getElementById('previewImg').src = compressed;
+      document.getElementById('resultImg').src = compressed;
+      showScreen('analyzing');
+      analyze(compressed);
+    };
+    img.src = raw;
   };
   reader.readAsDataURL(file);
 }
@@ -427,25 +444,27 @@ async function analyze(dataUrl) {
 }
 
 function showResult(r) {
+  // Show screen first so all elements are in the active DOM before we write to them
+  showScreen('result');
   const v = r.verdict.toUpperCase();
   const card = document.getElementById('verdictCard');
-  card.className = 'verdict-card ' + (v==='YES'?'yes':v==='CAUTION'?'caution':'no');
-  document.getElementById('verdictEmoji').textContent = v==='YES'?'✅':v==='CAUTION'?'⚠️':'🚫';
-  document.getElementById('verdictWord').textContent = v;
-  document.getElementById('verdictReason').textContent = r.reason;
+  if (card) card.className = 'verdict-card ' + (v==='YES'?'yes':v==='CAUTION'?'caution':'no');
+  const setEl = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  setEl('verdictEmoji', v==='YES'?'✅':v==='CAUTION'?'⚠️':'🚫');
+  setEl('verdictWord', v);
+  setEl('verdictReason', r.reason);
   const w = WINDOWS[currentWindow];
-  document.getElementById('wcEmoji').textContent = w.emoji;
-  document.getElementById('wcVal').textContent = w.label;
-  document.getElementById('dCal').textContent = r.calories != null ? r.calories+' kcal' : '—';
-  document.getElementById('dProt').textContent = r.protein_g != null ? r.protein_g+'g' : '—';
-  document.getElementById('dSug').textContent = r.total_sugar_g != null ? r.total_sugar_g+'g' : '—';
-  document.getElementById('dAsug').textContent = r.added_sugar_g != null ? r.added_sugar_g+'g' : '—';
-  document.getElementById('dNote').textContent = (r.restore_note||'') + (r.ask_doctor ? ' Ask your doctor about the RESTORE framework to find out which window you are in.' : '');
+  setEl('wcEmoji', w.emoji);
+  setEl('wcVal', w.label);
+  setEl('dCal', r.calories != null ? r.calories+' kcal' : '—');
+  setEl('dProt', r.protein_g != null ? r.protein_g+'g' : '—');
+  setEl('dSug', r.total_sugar_g != null ? r.total_sugar_g+'g' : '—');
+  setEl('dAsug', r.added_sugar_g != null ? r.added_sugar_g+'g' : '—');
+  setEl('dNote', (r.restore_note||'') + (r.ask_doctor ? ' Ask your doctor about the RESTORE framework to find out which window you are in.' : ''));
   detailsOpen = false;
-  document.getElementById('detailsPanel').classList.remove('open');
-  document.getElementById('expandArrow').classList.remove('open');
-  document.getElementById('expandBtn').querySelector('span').textContent = 'See nutrition details';
-  showScreen('result');
+  const dp = document.getElementById('detailsPanel'); if (dp) dp.classList.remove('open');
+  const ea = document.getElementById('expandArrow'); if (ea) ea.classList.remove('open');
+  const eb = document.getElementById('expandBtn'); if (eb) eb.querySelector('span').textContent = 'See nutrition details';
 }
 
 function toggleDetails() {
